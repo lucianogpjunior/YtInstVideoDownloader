@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YtInsDownloader</title>
+
+    <style scoped>
+        .dark-mode{
+            --cor-fundo: rgb(19, 18, 18);
+            --cor-texto: white;
+        }
+        body{
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+        }
+        form{
+            display: flex;
+            justify-content: center;
+            margin-top: 8dvh;
+        }
+        .input-container{
+            width: 55vh;
+            height: 4dvh;
+        }
+        .readme-container{
+            margin-top:40dvh;
+        }
+        .imagem-container{
+            margin-top: 20dvh;
+            height: 50dvh; 
+            width: 100dvh;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <label style="font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Dark-mode</label>
+        <input type="checkbox" title="dark mode">
+
+        <section>
+            <form action="/" method="POST">
+                <input type="text" name="link" placeholder="Envie Link" class="input-container">
+                <button type="submit">Enviar</button>
+            </form>
+            <p style="display: flex; justify-content: center; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Cole a URL de um video do YouTube ou Instagram Reels</p>
+        </section>
+        
+        <section style="display: flex; justify-content: center;">
+            <img src="./static/tutorial.png" alt="tutorial-img" class="imagem-container">
+        </section>
+
+        <section class="readme-container">
+            <div>
+                <h1 style="display: flex; justify-content: center;">Leia-me</h1>
+                <hr>
+            </div>
+            <p>O intuito dessa página é ter como projeto de portfólio no GitHub. Feito apenas para fins educacionais, para aprender conceitos de python com as bibliotecas Flask, pytube, instaloader e demais bibliotecas...</p>
+        </section>
+        <script>
+            document.querySelector("input").onclick= () =>{
+                document.body.classList.toggle("dark-mode")
+            }
+        </script>
+    </main>
+</body>
+</html>
