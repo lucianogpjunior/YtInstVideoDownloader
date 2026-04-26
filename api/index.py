@@ -7,7 +7,9 @@ import instaloader
 import io
 import re
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder="../templates", 
+            static_folder="../static")
 def ind_plataforma(url):
     youtube_regex = r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|shorts/|.+\?v=)?([^&=%\?]{11})'
     instagram_regex = r'(https?://)?(www\.)?instagram\.com/(p|reels|tv)/([^/?#&]+)'
