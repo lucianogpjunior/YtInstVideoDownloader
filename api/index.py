@@ -41,7 +41,11 @@ def videoDownload():
 
         if (plataforma == "yt"):
             
-            yt = YouTube(url)
+            yt = YouTube(
+                url,
+                use_oauth=False, 
+                allow_oauth_cache=True
+            )
             stream = yt.streams.get_highest_resolution()
 
             buffer = io.BytesIO()
