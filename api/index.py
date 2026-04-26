@@ -108,7 +108,7 @@ class videosInPlaylist:
         except Exception as error:
             return "Erro, não foi possivel encontrar a playlist"
 '''       
-if __name__ == '__main__':
-    app.run(debug=True)
+#if __name__ == '__main__':
+#       app.run(debug=True)
 
 
