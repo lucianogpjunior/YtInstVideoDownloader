@@ -43,8 +43,9 @@ def videoDownload():
             
             yt = YouTube(
                 url,
-                use_oauth=False, 
-                allow_oauth_cache=True
+                use_oauth=True, 
+                allow_oauth_cache=True,
+                use_po_token=True,
             )
             stream = yt.streams.get_highest_resolution()
 
