@@ -1,48 +1,38 @@
-import io
 import os
 import re
+import shutil
 import tempfile
 
-import instaloader
-import requests
 import yt_dlp
 
 from flask import (
     Flask,
+    after_this_request,
     redirect,
     render_template,
     request,
     send_file,
-    url_for,
+    url_for
 )
 
-# Caminho da raiz do projeto
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(
     __name__,
     template_folder=os.path.join(BASE_DIR, "templates"),
-    static_folder=os.path.join(BASE_DIR, "static"),
+    static_folder=os.path.join(BASE_DIR, "static")
 )
 
 
-def ind_plataforma(url):
-    youtube_regex = (
-        r"(https?://)?(www\.)?"
-        r"(youtube|youtu|youtube-nocookie)\.(com|be)/"
-        r"(watch\?v=|embed/|v/|shorts/|.+\?v=)?([^&=%\?]{11})"
-    )
+def plataforma(url):
+    youtube = r"(youtube\.com|youtu\.be)"
+    instagram = r"instagram\.com"
 
-    instagram_regex = (
-        r"(https?://)?(www\.)?"
-        r"instagram\.com/(p|reel|reels|tv)/([^/?#&]+)"
-    )
+    if re.search(youtube, url, re.IGNORECASE):
+        return "youtube"
 
-    if re.search(youtube_regex, url):
-        return "yt"
-
-    if re.search(instagram_regex, url):
-        return "insta"
+    if re.search(instagram, url, re.IGNORECASE):
+        return "instagram"
 
     return "desconhecido"
 
@@ -56,13 +46,10 @@ def index():
 
         if url:
 
-            plataforma = ind_plataforma(url)
-
             return redirect(
                 url_for(
-                    "videoDownload",
-                    url=url,
-                    plataforma=plataforma,
+                    "download",
+                    url=url
                 )
             )
 
@@ -70,96 +57,78 @@ def index():
 
 
 @app.route("/download")
-def videoDownload():
+def download():
 
     url = request.args.get("url")
-    plataforma = request.args.get("plataforma")
 
     if not url:
-        return "URL não informada.", 400
+        return "URL inválida", 400
 
-    if plataforma == "yt":
+    temp_dir = tempfile.mkdtemp()
 
-        try:
+    ydl_opts = {
 
-            temp_dir = tempfile.mkdtemp()
+        # melhor vídeo disponível
+        "format": "best",
 
-            ydl_opts = {
-                "format": "best[ext=mp4]/best",
-                "merge_output_format": "mp4",
-                "outtmpl": os.path.join(temp_dir, "%(title)s.%(ext)s"),
-                "quiet": True,
-                "noplaylist": True,
+        # pasta temporária
+        "outtmpl": os.path.join(temp_dir, "%(title)s.%(ext)s"),
+
+        # evita playlist
+        "noplaylist": True,
+
+        "quiet": True,
+
+        "no_warnings": True,
+
+        # navegador usado para burlar alguns bloqueios
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
             }
+        }
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    }
 
-                info = ydl.extract_info(url, download=True)
+    try:
 
-                filename = ydl.prepare_filename(info)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            # yt-dlp pode trocar a extensão após unir vídeo+áudio
-            base = os.path.splitext(filename)[0]
+            info = ydl.extract_info(url, download=True)
 
-            if os.path.exists(base + ".mp4"):
-                filename = base + ".mp4"
+            filename = ydl.prepare_filename(info)
 
-            return send_file(
-                filename,
-                as_attachment=True,
-                download_name=os.path.basename(filename),
-                mimetype="video/mp4",
-            )
+            # procura o arquivo real
+            for arquivo in os.listdir(temp_dir):
 
-        except Exception as e:
+                filename = os.path.join(temp_dir, arquivo)
 
-            print(e)
+                break
 
-            return f"Erro ao baixar vídeo do YouTube:<br><br>{e}", 400
+        @after_this_request
+        def remover(response):
 
-    elif plataforma == "insta":
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception as e:
+                print(e)
 
-        try:
+            return response
 
-            loader = instaloader.Instaloader(
-                download_comments=False,
-                download_geotags=False,
-                download_pictures=False,
-                download_video_thumbnails=False,
-                save_metadata=False,
-            )
+        return send_file(
+            filename,
+            as_attachment=True,
+            download_name=os.path.basename(filename)
+        )
 
-            shortcode = url.split("/")[-2]
+    except Exception as e:
 
-            post = instaloader.Post.from_shortcode(
-                loader.context,
-                shortcode,
-            )
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
-            if not post.is_video:
-                return "Esse post não contém vídeo."
-
-            response = requests.get(post.video_url)
-
-            buffer = io.BytesIO(response.content)
-            buffer.seek(0)
-
-            titulo = post.caption[:30] if post.caption else shortcode
-
-            return send_file(
-                buffer,
-                as_attachment=True,
-                download_name=f"{titulo}.mp4",
-                mimetype="video/mp4",
-            )
-
-        except Exception as e:
-
-            print(e)
-
-            return f"Erro ao baixar vídeo do Instagram:<br><br>{e}", 400
-
-    return "URL inválida.", 400
+        return f"""
+        <h2>Erro ao baixar o vídeo.</h2>
+        <pre>{e}</pre>
+        """, 400
 
 
 if __name__ == "__main__":
