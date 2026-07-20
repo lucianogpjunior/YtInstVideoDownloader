@@ -1,5 +1,5 @@
 flask
-pytubefix
+yt-dlp 
 instaloader
 requests
 gunicorn
